@@ -4,7 +4,7 @@
 This project focuses on detecting fraudulent claims using machine learning. We analyze patterns in the dataset, apply feature engineering, and train multiple models to improve fraud detection accuracy. The primary goal is to minimize financial losses by identifying fraudulent claims effectively while balancing false positives and false negatives.  
 
 ## Dataset Description  
-The dataset used in this project is [`financial_data_log.csv`](financial_data_log.csv). It contains transaction details, customer demographics, and fraud indicators. Since fraudulent claims are much fewer than normal ones, the dataset is highly imbalanced, requiring special techniques during preprocessing and model training.  
+The dataset used in this project is [`financial_data_log.csv`](financial_data_log.csv). It contains records of mobile money transactions, including transaction details, customer demographics, and fraud indicators. Fraudulent transactions are much rarer than normal ones, resulting in a highly imbalanced dataset.
 
 Below is the description of the dataset columns:  
 
@@ -27,7 +27,10 @@ Below is the description of the dataset columns:
 2. **[Exploratory Data Analysis (EDA)](#exploratory-data-analysis-eda)** – Understanding the characteristics of fraudulent vs. normal claims using visualizations and statistics.  
 3. **[Weight of Evidence (WOE) for Fraud Detection](#weight-of-evidence-woe-for-fraud-detection)** – Transforming categorical features into numerical values based on fraud likelihood.
 4. **[Fraud Detection Using Outlier Detection](#fraud-detection-using-outlier-detection)** – Using statistical methods (IQR and Z-score) to detect fraudulent transactions.
-5. **[Clustering for Fraud Detection](#clustering-for-fraud-detection)** – Using **K-Means clustering** to detect fraudulent transactions and visualizing results with **PCA**.  
+5. **[Clustering for Fraud Detection](#clustering-for-fraud-detection)** – Using K-Means clustering to detect fraudulent transactions and visualizing results with **PCA**.
+6. **[Model Evaluation](#model-evaluation)** – Comparing statistical vs. clustering models using performance metrics
+7. **[Ensemble Models for Fraud Detection](#ensemble-models-for-fraud-detection)** – Combining multiple models to improve fraud detection.
+8. **[Financial Evaluation](#financial-evaluation)** – Analyzing the cost-benefit impact of fraud detection models.
 
 ---
 
@@ -38,7 +41,7 @@ To ensure data quality and prevent errors in model training, we performed the fo
 2. **Checked for missing values** and confirmed no significant gaps in the dataset.  
 3. **Checked for duplicate records** and found that `<3>` duplicate rows were `<removed/none found>`.  
 4. **Separated features (`X`) and target (`y`)**, where `isFraud` is the fraud label (0 = not fraud, 1 = fraud).  
-5. **Split the data into training (80%) and testing (20%) sets** while maintaining the fraud ratio.  
+5. **Split the data into training (80%) and testing (20%) sets** while maintaining the fraud ratio.
 
 This step ensures the dataset is clean and ready for feature engineering and modeling.  
 The detailed code and results can be found in [`fraud_analytics.ipynb`](fraud_analytics.ipynb).  
@@ -89,10 +92,8 @@ To identify fraud, we applied **Interquartile Range (IQR) and Z-score** to detec
 
 The detailed analysis can be found in [`fraud_analytics.ipynb`](fraud_analytics.ipynb).
 
-### **5. Clustering for Fraud Detection**  
-Fraudulent transactions often follow different patterns than normal ones. We used **K-Means clustering** to group similar transactions and detect anomalies.  
-
-#### **Steps Taken:**  
+## **Clustering for Fraud Detection**  
+Fraudulent transactions often follow different patterns than normal ones. We used **K-Means clustering** to group similar transactions and detect anomalies. Steps Taken:  
 1. **Data Scaling** to normalize features for better clustering.  
 2. **Clustering** using **K-Means (K=2)** to group transactions into **normal** and **fraudulent** clusters.  
 3. **Used PCA** (Principal Component Analysis) to **reduce dimensions** and visualize transaction clusters. **Insights from visualization:**  
@@ -102,3 +103,58 @@ Fraudulent transactions often follow different patterns than normal ones. We use
    - Some fraud points are **far from the main cluster**, showing they behave very differently.
 
 Detailed code and analysis are available in [`fraud_analytics.ipynb`](fraud_analytics.ipynb).
+
+## **Model Evaluation**  
+After building fraud detection models, we evaluated their performance using three key metrics:  
+
+- **Precision**: How many predicted fraud cases were actually fraud?  
+- **Recall**: How many actual fraud cases did the model successfully detect?  
+- **F1-score**: The balance between precision and recall.  
+
+The evaluation results, detailed in [`fraud_analytics.ipynb`](fraud_analytics.ipynb), show that **neither model performs well for fraud detection** because they do not learn from labeled fraud cases. A **supervised model like Logistic Regression or Random Forest**, trained on actual fraud labels, would be more effective.  
+
+### **Comparison of Models**  
+
+| Model | Strengths | Weaknesses |  
+|--------|------------|-------------|  
+| **Statistical Model (Outlier Detection)** | Simple and easy to understand. Does not require labeled data. | Misses most fraud cases (low recall). Many frauds do not appear as outliers. |  
+| **Clustering (K-Means)** | Can find hidden patterns in data. Works without labeled fraud cases. | Clusters are not meaningful for fraud detection. Too many false positives. |  
+
+## **Ensemble Models for Fraud Detection**  
+To improve fraud detection, we tested three models that combine **statistical methods** and **clustering**:  
+
+1. **Model 1 (IQR Method)** – Identifies fraud based on outliers in the interquartile range.  
+2. **Model 2 (Z-Score Method)** – Flags fraud using standard deviation thresholds.  
+3. **Model 3 (IQR + Z-Score + K-Means)** – Combines statistical outlier detection with clustering.  
+
+The results are detailed in [`fraud_analytics.ipynb`](fraud_analytics.ipynb).
+### **Evaluation Metrics**  
+
+| Model | Precision | Recall | F1-score |  
+|-------|-----------|--------|----------|  
+| **Model 1 (IQR)** | 0.0141 | 0.0277 | 0.0187 |  
+| **Model 2 (Z-Score)** | 0.0374 | 0.0116 | 0.0177 |  
+| **Model 3 (IQR + Z-Score + K-Means)** | 0.0137 | 0.0214 | 0.0168 |  
+
+Model 3 **usually performs better**, but **only if the individual models work well**.
+
+## **Financial Evaluation**  
+To assess the financial impact of fraud detection, we evaluated the **best-performing model** based on **F1-score** and calculated its total utility, cost, and return on investment (ROI). The following steps were performed:  
+
+1. **Selected the best model** based on the highest **F1-score**.  
+2. **Identified True Positives (TP), True Negatives (TN), False Positives (FP), and False Negatives (FN)** to categorize model performance.  
+3. **Calculated financial metrics**:
+   - **Prevented Fraud Loss**: The total amount saved by correctly detecting fraudulent transactions (**TP**).  
+   - **Loss from Missed Fraud**: The total amount lost due to undetected fraud cases (**FN**).  
+   - **False Positive Cost**: The financial loss from incorrectly flagging legitimate transactions as fraud (**FP**).  
+   - **Profit from Legitimate Transactions**: The gain from correctly identifying non-fraudulent transactions (**TN**).  
+4. **Computed the Return on Investment (ROI)** to assess if the fraud detection system is financially viable.  
+
+### **Findings**  
+- **Best Model**: Model 1 (IQR)  
+- **Total Utility (Net Profit)**: **-545,114,696.98** → The model results in a **financial loss**.  
+- **Total Cost of Ownership**: **800,000,000** → The operational cost is high.  
+- **Total Cost of Fraud Handling**: **228,600,000** → Cost incurred to manage fraud cases.  
+- **ROI**: **-53.00%** → A negative ROI indicates that the fraud detection system is **not profitable** and incurs more losses than savings.  
+
+The results suggest that the current fraud detection model needs improvement, as the **cost of false positives and missed fraud cases outweighs the benefits** of detecting fraud.
